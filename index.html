@@ -1,0 +1,1413 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VARK Learning Style Predictor</title>
+    <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.4.0/dist/axios.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.22.5/babel.min.js"></script>
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-100 to-purple-100">
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { createRoot } = ReactDOM;
+
+        // Homepage Component
+        const Home = ({ setPage }) => (
+            <div className="min-h-screen flex flex-col items-center justify-center px-4">
+                <div className="text-center">
+                    <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-6 animate-pulse">
+                        VARK Learning Style Predictor
+                    </h1>
+                    <p className="text-lg text-gray-700 mb-8 max-w-md mx-auto">
+                        Discover your learning style or manage predictions with our intuitive platform.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-4">
+                        <button 
+                            onClick={() => setPage('userLogin')} 
+                            className="bg-blue-600 text-white px-8 py-4 rounded-full shadow-lg hover:bg-blue-700 transform hover:scale-105 transition-all duration-300"
+                        >
+                            Remote User
+                        </button>
+                        <button 
+                            onClick={() => setPage('adminLogin')} 
+                            className="bg-purple-600 text-white px-8 py-4 rounded-full shadow-lg hover:bg-purple-700 transform hover:scale-105 transition-all duration-300"
+                        >
+                            Service Provider
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+
+        // Login Component
+        const Login = ({ setPage, role, setUserId }) => {
+            const [formData, setFormData] = useState({
+                name: '', email: '', mobile: '', college_id: '', password: ''
+            });
+            const [isRegister, setIsRegister] = useState(false);
+            const [message, setMessage] = useState('');
+            const [isLoading, setIsLoading] = useState(false);
+
+            const handleChange = (e) => {
+                setFormData({ ...formData, [e.target.name]: e.target.value });
+            };
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setIsLoading(true);
+                const endpoint = isRegister ? '/register' : '/login';
+                const data = { ...formData, role: role === 'user' ? 'user' : 'admin' };
+                
+                try {
+                    console.log('Sending request to', endpoint);
+                    const response = await axios.post(`http://127.0.0.1:5000${endpoint}`, data);
+                    setMessage(response.data.message);
+                    if (!isRegister && response.data.user_id) {
+                        setUserId(response.data.user_id);
+                        setPage(role === 'user' ? 'userDashboard' : 'adminDashboard');
+                    }
+                } catch (error) {
+                    const errorMsg = error.response?.data?.message || 
+                        (error.code === 'ERR_NETWORK' ? 'Cannot connect to server' : 'An unexpected error occurred');
+                    console.error('Error in', endpoint, ':', errorMsg);
+                    setMessage(`Error: ${errorMsg}`);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
+            return (
+                <div className="min-h-screen flex items-center justify-center px-4">
+                    <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md transform transition-all duration-500 hover:scale-105">
+                        <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">
+                            {isRegister ? 'Register' : 'Login'} as {role === 'user' ? 'Remote User' : 'Service Provider'}
+                        </h2>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            {isRegister && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-600">Name</label>
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        value={formData.name}
+                                        onChange={handleChange}
+                                        placeholder="Enter your name"
+                                        className="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none transition-colors"
+                                        required
+                                    />
+                                </div>
+                            )}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-600">Email</label>
+                                <input
+                                    type="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    placeholder="Enter your email"
+                                    className="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none transition-colors"
+                                    required
+                                />
+                            </div>
+                            {isRegister && (
+                                <>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600">Mobile Number</label>
+                                        <input
+                                            type="text"
+                                            name="mobile"
+                                            value={formData.mobile}
+                                            onChange={handleChange}
+                                            placeholder="Enter your mobile"
+                                            className="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none transition-colors"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600">College ID</label>
+                                        <input
+                                            type="text"
+                                            name="college_id"
+                                            value={formData.college_id}
+                                            onChange={handleChange}
+                                            placeholder="Enter your college ID"
+                                            className="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none transition-colors"
+                                            required
+                                        />
+                                    </div>
+                                </>
+                            )}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-600">Password</label>
+                                <input
+                                    type="password"
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    placeholder="Enter your password"
+                                    className="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none transition-colors"
+                                    required
+                                />
+                            </div>
+                            <button 
+                                type="submit" 
+                                className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white p-3 rounded-lg hover:from-blue-600 hover:to-purple-600 flex items-center justify-center transition-all duration-300 disabled:opacity-50"
+                                disabled={isLoading}
+                            >
+                                {isLoading ? (
+                                    <svg className="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8h8a8 8 0 01-16 0z" />
+                                    </svg>
+                                ) : null}
+                                {isRegister ? 'Register' : 'Login'}
+                            </button>
+                        </form>
+                        <p className="mt-6 text-center text-gray-600">
+                            {isRegister ? 'Already have an account?' : 'No account?'}
+                            <button 
+                                onClick={() => setIsRegister(!isRegister)} 
+                                className="text-blue-600 font-semibold hover:underline ml-1"
+                            >
+                                {isRegister ? 'Login' : 'Register'}
+                            </button>
+                        </p>
+                        {message && (
+                            <p className={`mt-4 text-center ${message.includes('successful') ? 'text-green-600' : 'text-red-600'} font-medium animate-fade-in`}>
+                                {message}
+                            </p>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        // User Dashboard Component
+        const UserDashboard = ({ userId, setPage }) => {
+            const [formData, setFormData] = useState({
+                age: '', course: '', topic: '', difficulty_level: '', 
+                video_time: '', article_time: '', hands_on_time: '', 
+                quiz_time: '', quiz_score: '', progress: '', attempts: ''
+            });
+            const [prediction, setPrediction] = useState('');
+            const [accuracies, setAccuracies] = useState({});
+            const [predictions, setPredictions] = useState([]);
+            const [message, setMessage] = useState('');
+            const [isLoading, setIsLoading] = useState(false);
+
+            useEffect(() => {
+                axios.get('http://127.0.0.1:5000/accuracies')
+                    .then(res => setAccuracies(res.data))
+                    .catch(err => setMessage('Error fetching accuracies: ' + (err.response?.data?.message || err.message)));
+                axios.get(`http://127.0.0.1:5000/predictions?user_id=${userId}&role=user`)
+                    .then(res => setPredictions(res.data))
+                    .catch(err => setMessage('Error fetching predictions: ' + (err.response?.data?.message || err.message)));
+            }, [userId]);
+
+            const handleChange = (e) => {
+                setFormData({ ...formData, [e.target.name]: e.target.value });
+            };
+
+            const handlePredict = async (e) => {
+                e.preventDefault();
+                setIsLoading(true);
+                try {
+                    const response = await axios.post('http://127.0.0.1:5000/predict', {
+                        user_id: userId,
+                        ...formData,
+                        age: parseInt(formData.age) || 0,
+                        video_time: parseInt(formData.video_time) || 0,
+                        article_time: parseInt(formData.article_time) || 0,
+                        hands_on_time: parseInt(formData.hands_on_time) || 0,
+                        quiz_time: parseInt(formData.quiz_time) || 0,
+                        quiz_score: parseInt(formData.quiz_score) || 0,
+                        progress: parseInt(formData.progress) || 0,
+                        attempts: parseInt(formData.attempts) || 0
+                    });
+                    setPrediction(response.data.learning_style);
+                    const res = await axios.get(`http://127.0.0.1:5000/predictions?user_id=${userId}&role=user`);
+                    setPredictions(res.data);
+                    setMessage('Prediction successful!');
+                } catch (error) {
+                    const errorMsg = error.response?.data?.message || 
+                        (error.code === 'ERR_NETWORK' ? 'Cannot connect to server' : 'An unexpected error occurred');
+                    console.error('Prediction error:', errorMsg);
+                    setMessage(`Error: ${errorMsg}`);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
+            return (
+                <div className="min-h-screen p-8">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="flex justify-between items-center mb-8">
+                            <h1 className="text-4xl font-bold text-gray-800">Remote User Dashboard</h1>
+                            <button 
+                                onClick={() => setPage('home')} 
+                                className="bg-red-600 text-white px-6 py-2 rounded-lg shadow hover:bg-red-700 transition-all duration-300"
+                            >
+                                Logout
+                            </button>
+                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <div className="bg-white p-6 rounded-2xl shadow-xl">
+                                <h2 className="text-2xl font-semibold text-gray-800 mb-6">Predict Your Learning Style</h2>
+                                <form onSubmit={handlePredict} className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600">Age</label>
+                                        <input
+                                            type="number"
+                                            name="age"
+                                            value={formData.age}
+                                            onChange={handleChange}
+                                            placeholder="Enter your age"
+                                            className="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600">Course</label>
+                                        <select
+                                            name="course"
+                                            value={formData.course}
+                                            onChange={handleChange}
+                                            className="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                                            required
+                                        >
+                                            <option value="">Select Course</option>
+                                            <option value="Machine Learning">Machine Learning</option>
+                                            <option value="Python">Python</option>
+                                            <option value="Java">Java</option>
+                                            <option value="C++">C++</option>
+                                            <option value="Data Science">Data Science</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600">Topic</label>
+                                        <select
+                                            name="topic"
+                                            value={formData.topic}
+                                            onChange={handleChange}
+                                            className="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                                            required
+                                        >
+                                            <option value="">Select Topic</option>
+                                            <option value="OOP">OOP</option>
+                                            <option value="Sorting Algorithms">Sorting Algorithms</option>
+                                            <option value="Loops">Loops</option>
+                                            <option value="Data Visualization">Data Visualization</option>
+                                            <option value="Regression">Regression</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600">Difficulty Level</label>
+                                        <select
+                                            name="difficulty_level"
+                                            value={formData.difficulty_level}
+                                            onChange={handleChange}
+                                            className="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                                            required
+                                        >
+                                            <option value="">Select Difficulty</option>
+                                            <option value="Easy">Easy</option>
+                                            <option value="Medium">Medium</option>
+                                            <option value="Hard">Hard</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600">Video Time (mins)</label>
+                                        <input
+                                            type="number"
+                                            name="video_time"
+                                            value={formData.video_time}
+                                            onChange={handleChange}
+                                            placeholder="Enter video time"
+                                            className="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600">Article Time (mins)</label>
+                                        <input
+                                            type="number"
+                                            name="article_time"
+                                            value={formData.article_time}
+                                            onChange={handleChange}
+                                            placeholder="Enter article time"
+                                            className="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600">Hands-on Time (mins)</label>
+                                        <input
+                                            type="number"
+                                            name="hands_on_time"
+                                            value={formData.hands_on_time}
+                                            onChange={handleChange}
+                                            placeholder="Enter hands-on time"
+                                            className="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600">Quiz Time (mins)</label>
+                                        <input
+                                            type="number"
+                                            name="quiz_time"
+                                            value={formData.quiz_time}
+                                            onChange={handleChange}
+                                            placeholder="Enter quiz time"
+                                            className="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600">Quiz Score (%)</label>
+                                        <input
+                                            type="number"
+                                            name="quiz_score"
+                                            value={formData.quiz_score}
+                                            onChange={handleChange}
+                                            placeholder="Enter quiz score"
+                                            className="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600">Progress (%)</label>
+                                        <input
+                                            type="number"
+                                            name="progress"
+                                            value={formData.progress}
+                                            onChange={handleChange}
+                                            placeholder="Enter progress"
+                                            className="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600">Attempts</label>
+                                        <input
+                                            type="number"
+                                            name="attempts"
+                                            value={formData.attempts}
+                                            onChange={handleChange}
+                                            placeholder="Enter attempts"
+                                            className="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+                                    <button 
+                                        type="submit" 
+                                        className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white p-3 rounded-lg hover:from-blue-600 hover:to-purple-600 flex items-center justify-center transition-all duration-300 disabled:opacity-50"
+                                        disabled={isLoading}
+                                    >
+                                        {isLoading ? (
+                                            <svg className="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8h8a8 8 0 01-16 0z" />
+                                            </svg>
+                                        ) : null}
+                                        Predict My Learning Style
+                                    </button>
+                                </form>
+                                {prediction && (
+                                    <p className="mt-6 text-lg text-center text-green-600 font-semibold animate-fade-in">
+                                        Predicted Learning Style: <span className="text-purple-600">{prediction}</span>
+                                    </p>
+                                )}
+                                {message && (
+                                    <p className={`mt-4 text-center ${message.includes('successful') ? 'text-green-600' : 'text-red-600'} font-medium animate-fade-in`}>
+                                        {message}
+                                    </p>
+                                )}
+                            </div>
+                            <div className="space-y-8">
+                                <div className="bg-white p-6 rounded-2xl shadow-xl">
+                                    <h2 className="text-2xl font-semibold text-gray-800 mb-6">Model Accuracies</h2>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-left border-separate border-spacing-0">
+                                            <thead>
+                                                <tr className="bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+                                                    <th className="p-4 rounded-tl-lg">Model</th>
+                                                    <th className="p-4 rounded-tr-lg">Accuracy</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {Object.entries(accuracies).filter(([key]) => key !== 'best_f1').map(([model, accuracy], index) => (
+                                                    <tr key={model} className="hover:bg-gray-50 transition-colors">
+                                                        <td className={`p-4 border-b ${index === Object.keys(accuracies).length - 1 ? 'rounded-bl-lg' : ''}`}>
+                                                            {model}
+                                                        </td>
+                                                        <td className={`p-4 border-b ${index === Object.keys(accuracies).length - 1 ? 'rounded-br-lg' : ''}`}>
+                                                            {(accuracy * 100).toFixed(2)}%
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div className="bg-white p-6 rounded-2xl shadow-xl">
+                                    <h2 className="text-2xl font-semibold text-gray-800 mb-6">Your Predictions</h2>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-left border-separate border-spacing-0">
+                                            <thead>
+                                                <tr className="bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+                                                    <th className="p-4 rounded-tl-lg">Course</th>
+                                                    <th className="p-4">Topic</th>
+                                                    <th className="p-4 rounded-tr-lg">Learning Style</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {predictions.map((p, index) => (
+                                                    <tr key={p.id} className="hover:bg-gray-50 transition-colors">
+                                                        <td className={`p-4 border-b ${index === predictions.length - 1 ? 'rounded-bl-lg' : ''}`}>
+                                                            {p.course}
+                                                        </td>
+                                                        <td className="p-4 border-b">{p.topic}</td>
+                                                        <td className={`p-4 border-b ${index === predictions.length - 1 ? 'rounded-br-lg' : ''}`}>
+                                                            {p.learning_style}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Admin Dashboard Component
+        const AdminDashboard = ({ setPage }) => {
+            const [accuracies, setAccuracies] = useState({});
+            const [predictions, setPredictions] = useState([]);
+            const [message, setMessage] = useState('');
+
+            useEffect(() => {
+                axios.get('http://127.0.0.1:5000/accuracies')
+                    .then(res => setAccuracies(res.data))
+                    .catch(err => setMessage('Error fetching accuracies: ' + (err.response?.data?.message || err.message)));
+                axios.get('http://127.0.0.1:5000/predictions?role=admin')
+                    .then(res => setPredictions(res.data))
+                    .catch(err => setMessage('Error fetching predictions: ' + (err.response?.data?.message || err.message)));
+            }, []);
+
+            return (
+                <div className="min-h-screen p- Footermax-w-7xl mx-auto">
+                    <div className="flex justify-between items-center mb-8">
+                        <h1 className="text-4xl font-bold text-gray-800">Service Provider Dashboard</h1>
+                        <button 
+                            onClick={() => setPage('home')} 
+                            className="bg-red-600 text-white px-6 py-2 rounded-lg shadow hover:bg-red-700 transition-all duration-300"
+                        >
+                            Logout
+                        </button>
+                    </div>
+                    <div className="space-y-8">
+                        <div className="bg-white p-6 rounded-2xl shadow-xl">
+                            <h2 className="text-2xl font-semibold text-gray-800 mb-6">Model Accuracies</h2>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left border-separate border-spacing-0">
+                                    <thead>
+                                        <tr className="bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+                                            <th className="p-4 rounded-tl-lg">Model</th>
+                                            <th className="p-4 rounded-tr-lg">Accuracy</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {Object.entries(accuracies).filter(([key]) => key !== 'best_f1').map(([model, accuracy], index) => (
+                                            <tr key={model} className="hover:bg-gray-50 transition-colors">
+                                                <td className={`p-4 border-b ${index === Object.keys(accuracies).length - 1 ? 'rounded-bl-lg' : ''}`}>
+                                                    {model}
+                                                </td>
+                                                <td className={`p-4 border-b ${index === Object.keys(accuracies).length - 1 ? 'rounded-br-lg' : ''}`}>
+                                                    {(accuracy * 100).toFixed(2)}%
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div className="bg-white p-6 rounded-2xl shadow-xl">
+                            <h2 className="text-2xl font-semibold text-gray-800 mb-6">All User Predictions</h2>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left border-separate border-spacing-0">
+                                    <thead>
+                                        <tr className="bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+                                            <th className="p-4 rounded-tl-lg">User ID</th>
+                                            <th className="p-4">Course</th>
+                                            <th className="p-4">Topic</th>
+                                            <th className="p-4 rounded-tr-lg">Learning Style</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {predictions.map((p, index) => (
+                                            <tr key={p.id} className="hover:bg-gray-50 transition-colors">
+                                                <td className={`p-4 border-b ${index === predictions.length - 1 ? 'rounded-bl-lg' : ''}`}>
+                                                    {p.user_id}
+                                                </td>
+                                                <td className="p-4 border-b">{p.course}</td>
+                                                <td className="p-4 border-b">{p.topic}</td>
+                                                <td className={`p-4 border-b ${index === predictions.length - 1 ? 'rounded-br-lg' : ''}`}>
+                                                    {p.learning_style}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    {message && (
+                        <p className={`mt-4 text-center ${message.includes('successful') ? 'text-green-600' : 'text-red-600'} font-medium animate-fade-in`}>
+                            {message}
+                        </p>
+                    )}
+                </div>
+            );
+        };
+
+        // Main App Component
+        const App = () => {
+            const [page, setPage] = useState('home');
+            const [userId, setUserId] = useState(null);
+
+            return (
+                <div>
+                    {page === 'home' && <Home setPage={setPage} />}
+                    {page === 'userLogin' && <Login setPage={setPage} role="user" setUserId={setUserId} />}
+                    {page === 'adminLogin' && <Login setPage={setPage} role="admin" setUserId={setUserId} />}
+                    {page === 'userDashboard' && <UserDashboard userId={userId} setPage={setPage} />}
+                    {page === 'adminDashboard' && <AdminDashboard setPage={setPage} />}
+                </div>
+            );
+        };
+
+        // Render the App
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html> -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VARK Learning Style Predictor</title>
+    <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.4.0/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.22.5/babel.min.js"></script>
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-100 to-purple-100">
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        const { createRoot } = ReactDOM;
+
+        // Homepage Component
+        const Home = ({ setPage }) => (
+            <div className="min-h-screen flex items-center justify-center px-4">
+                <div className="text-center">
+                    <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-6 animate-pulse">
+                        VARK Learning Style Predictor
+                    </h1>
+                    <p className="text-lg text-gray-700 mb-8 max-w-md mx-auto">
+                        Discover your learning style or manage predictions with our intuitive platform.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                        <button 
+                            onClick={() => setPage('userLogin')} 
+                            className="bg-blue-600 text-white px-8 py-4 rounded-full shadow-lg hover:bg-blue-700 transform hover:scale-105 transition-all duration-300"
+                        >
+                            Remote User
+                        </button>
+                        <button 
+                            onClick={() => setPage('adminLogin')} 
+                            className="bg-purple-600 text-white px-8 py-4 rounded-full shadow-lg hover:bg-purple-700 transform hover:scale-105 transition-all duration-300"
+                        >
+                            Service Provider
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+
+        // Login Component
+        const Login = ({ setPage, role, setUserId }) => {
+            const [formData, setFormData] = useState({
+                name: '', email: '', mobile: '', college_id: '', password: ''
+            });
+            const [isRegister, setIsRegister] = useState(false);
+            const [message, setMessage] = useState('');
+            const [isLoading, setIsLoading] = useState(false);
+
+            const handleChange = (e) => {
+                setFormData({ ...formData, [e.target.name]: e.target.value });
+            };
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setIsLoading(true);
+                const endpoint = isRegister ? '/register' : '/login';
+                const data = { ...formData, role: role === 'user' ? 'user' : 'admin' };
+                
+                try {
+                    console.log('Sending request to', endpoint);
+                    const response = await axios.post(`http://127.0.0.1:5000${endpoint}`, data);
+                    setMessage(response.data.message);
+                    if (!isRegister && response.data.user_id) {
+                        setUserId(response.data.user_id);
+                        setPage(role === 'user' ? 'userDashboard' : 'adminDashboard');
+                    }
+                } catch (error) {
+                    const errorMsg = error.response?.data?.message || 
+                        (error.code === 'ERR_NETWORK' ? 'Cannot connect to server' : 'An unexpected error occurred');
+                    console.error('Error in', endpoint, ':', errorMsg);
+                    setMessage(`Error: ${errorMsg}`);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
+            return (
+                <div className="min-h-screen flex items-center justify-center px-4">
+                    <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md transform transition-all duration-500 hover:scale-105">
+                        <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">
+                            {isRegister ? 'Register' : 'Login'} as {role === 'user' ? 'Remote User' : 'Service Provider'}
+                        </h2>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            {isRegister && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-600">Name</label>
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        value={formData.name}
+                                        onChange={handleChange}
+                                        placeholder="Enter your name"
+                                        className="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none transition-colors"
+                                        required
+                                    />
+                                </div>
+                            )}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-600">Email</label>
+                                <input
+                                    type="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    placeholder="Enter your email"
+                                    className="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none transition-colors"
+                                    required
+                                />
+                            </div>
+                            {isRegister && (
+                                <>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600">Mobile Number</label>
+                                        <input
+                                            type="text"
+                                            name="mobile"
+                                            value={formData.mobile}
+                                            onChange={handleChange}
+                                            placeholder="Enter your mobile"
+                                            className="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none transition-colors"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600">College ID</label>
+                                        <input
+                                            type="text"
+                                            name="college_id"
+                                            value={formData.college_id}
+                                            onChange={handleChange}
+                                            placeholder="Enter your college ID"
+                                            className="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none transition-colors"
+                                            required
+                                        />
+                                    </div>
+                                </>
+                            )}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-600">Password</label>
+                                <input
+                                    type="password"
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    placeholder="Enter your password"
+                                    className="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none transition-colors"
+                                    required
+                                />
+                            </div>
+                            <button 
+                                type="submit" 
+                                className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white p-3 rounded-lg hover:from-blue-600 hover:to-purple-600 flex items-center justify-center transition-all duration-300 disabled:opacity-50"
+                                disabled={isLoading}
+                            >
+                                {isLoading ? (
+                                    <svg className="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8h8a8 8 0 01-16 0z" />
+                                    </svg>
+                                ) : null}
+                                {isRegister ? 'Register' : 'Login'}
+                            </button>
+                        </form>
+                        <p className="mt-6 text-center text-gray-600">
+                            {isRegister ? 'Already have an account?' : 'No account?'}
+                            <button 
+                                onClick={() => setIsRegister(!isRegister)} 
+                                className="text-blue-600 font-semibold hover:underline ml-1"
+                            >
+                                {isRegister ? 'Login' : 'Register'}
+                            </button>
+                        </p>
+                        {message && (
+                            <p className={`mt-4 text-center ${message.includes('successful') ? 'text-green-600' : 'text-red-600'} font-medium animate-fade-in`}>
+                                {message}
+                            </p>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        // User Dashboard Component
+        const UserDashboard = ({ userId, setPage }) => {
+            const [formData, setFormData] = useState({
+                age: '', course: '', topic: '', difficulty_level: '', 
+                video_time: '', article_time: '', hands_on_time: '', 
+                quiz_time: '', quiz_score: '', progress: '', attempts: ''
+            });
+            const [prediction, setPrediction] = useState('');
+            const [accuracies, setAccuracies] = useState({});
+            const [predictions, setPredictions] = useState([]);
+            const [message, setMessage] = useState('');
+            const [isLoading, setIsLoading] = useState(false);
+
+            useEffect(() => {
+                axios.get('http://127.0.0.1:5000/accuracies')
+                    .then(res => setAccuracies(res.data))
+                    .catch(err => setMessage('Error fetching accuracies: ' + (err.response?.data?.message || err.message)));
+                axios.get(`http://127.0.0.1:5000/predictions?user_id=${userId}&role=user`)
+                    .then(res => setPredictions(res.data))
+                    .catch(err => setMessage('Error fetching predictions: ' + (err.response?.data?.message || err.message)));
+            }, [userId]);
+
+            const handleChange = (e) => {
+                setFormData({ ...formData, [e.target.name]: e.target.value });
+            };
+
+            const handlePredict = async (e) => {
+                e.preventDefault();
+                setIsLoading(true);
+                try {
+                    const response = await axios.post('http://127.0.0.1:5000/predict', {
+                        user_id: userId,
+                        ...formData,
+                        age: parseInt(formData.age) || 0,
+                        video_time: parseInt(formData.video_time) || 0,
+                        article_time: parseInt(formData.article_time) || 0,
+                        hands_on_time: parseInt(formData.hands_on_time) || 0,
+                        quiz_time: parseInt(formData.quiz_time) || 0,
+                        quiz_score: parseInt(formData.quiz_score) || 0,
+                        progress: parseInt(formData.progress) || 0,
+                        attempts: parseInt(formData.attempts) || 0
+                    });
+                    setPrediction(response.data.learning_style);
+                    const res = await axios.get(`http://127.0.0.1:5000/predictions?user_id=${userId}&role=user`);
+                    setPredictions(res.data);
+                    setMessage('Prediction successful!');
+                } catch (error) {
+                    const errorMsg = error.response?.data?.message || 
+                        (error.code === 'ERR_NETWORK' ? 'Cannot connect to server' : 'An unexpected error occurred');
+                    console.error('Prediction error:', errorMsg);
+                    setMessage(`Error: ${errorMsg}`);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
+            return (
+                <div className="min-h-screen p-8">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="flex justify-between items-center mb-8">
+                            <h1 className="text-4xl font-bold text-gray-800">Remote User Dashboard</h1>
+                            <button 
+                                onClick={() => setPage('home')} 
+                                className="bg-red-600 text-white px-6 py-2 rounded-lg shadow hover:bg-red-700 transition-all duration-300"
+                            >
+                                Logout
+                            </button>
+                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <div className="bg-white p-6 rounded-2xl shadow-xl">
+                                <h2 className="text-2xl font-semibold text-gray-800 mb-6">Predict Your Learning Style</h2>
+                                <form onSubmit={handlePredict} className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600">Age</label>
+                                        <input
+                                            type="number"
+                                            name="age"
+                                            value={formData.age}
+                                            onChange={handleChange}
+                                            placeholder="Enter your age"
+                                            className="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600">Course</label>
+                                        <select
+                                            name="course"
+                                            value={formData.course}
+                                            onChange={handleChange}
+                                            className="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                                            required
+                                        >
+                                            <option value="">Select Course</option>
+                                            <option value="Machine Learning">Machine Learning</option>
+                                            <option value="Python">Python</option>
+                                            <option value="Java">Java</option>
+                                            <option value="C++">C++</option>
+                                            <option value="Data Science">Data Science</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600">Topic</label>
+                                        <select
+                                            name="topic"
+                                            value={formData.topic}
+                                            onChange={handleChange}
+                                            className="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                                            required
+                                        >
+                                            <option value="">Select Topic</option>
+                                            <option value="OOP">OOP</option>
+                                            <option value="Sorting Algorithms">Sorting Algorithms</option>
+                                            <option value="Loops">Loops</option>
+                                            <option value="Data Visualization">Data Visualization</option>
+                                            <option value="Regression">Regression</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600">Difficulty Level</label>
+                                        <select
+                                            name="difficulty_level"
+                                            value={formData.difficulty_level}
+                                            onChange={handleChange}
+                                            className="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                                            required
+                                        >
+                                            <option value="">Select Difficulty</option>
+                                            <option value="Easy">Easy</option>
+                                            <option value="Medium">Medium</option>
+                                            <option value="Hard">Hard</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600">Video Time (mins)</label>
+                                        <input
+                                            type="number"
+                                            name="video_time"
+                                            value={formData.video_time}
+                                            onChange={handleChange}
+                                            placeholder="Enter video time"
+                                            className="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600">Article Time (mins)</label>
+                                        <input
+                                            type="number"
+                                            name="article_time"
+                                            value={formData.article_time}
+                                            onChange={handleChange}
+                                            placeholder="Enter article time"
+                                            className="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600">Hands-on Time (mins)</label>
+                                        <input
+                                            type="number"
+                                            name="hands_on_time"
+                                            value={formData.hands_on_time}
+                                            onChange={handleChange}
+                                            placeholder="Enter hands-on time"
+                                            className="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600">Quiz Time (mins)</label>
+                                        <input
+                                            type="number"
+                                            name="quiz_time"
+                                            value={formData.quiz_time}
+                                            onChange={handleChange}
+                                            placeholder="Enter quiz time"
+                                            className="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600">Quiz Score (%)</label>
+                                        <input
+                                            type="number"
+                                            name="quiz_score"
+                                            value={formData.quiz_score}
+                                            onChange={handleChange}
+                                            placeholder="Enter quiz score"
+                                            className="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600">Progress (%)</label>
+                                        <input
+                                            type="number"
+                                            name="progress"
+                                            value={formData.progress}
+                                            onChange={handleChange}
+                                            placeholder="Enter progress"
+                                            className="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600">Attempts</label>
+                                        <input
+                                            type="number"
+                                            name="attempts"
+                                            value={formData.attempts}
+                                            onChange={handleChange}
+                                            placeholder="Enter attempts"
+                                            className="w-full p-3 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+                                    <button 
+                                        type="submit" 
+                                        className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white p-3 rounded-lg hover:from-blue-600 hover:to-purple-600 flex items-center justify-center transition-all duration-300 disabled:opacity-50"
+                                        disabled={isLoading}
+                                    >
+                                        {isLoading ? (
+                                            <svg className="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8h8a8 8 0 01-16 0z" />
+                                            </svg>
+                                        ) : null}
+                                        Predict My Learning Style
+                                    </button>
+                                </form>
+                                {prediction && (
+                                    <p className="mt-6 text-lg text-center text-green-600 font-semibold animate-fade-in">
+                                        Predicted Learning Style: <span className="text-purple-600">{prediction}</span>
+                                    </p>
+                                )}
+                                {message && (
+                                    <p className={`mt-4 text-center ${message.includes('successful') ? 'text-green-600' : 'text-red-600'} font-medium animate-fade-in`}>
+                                        {message}
+                                    </p>
+                                )}
+                            </div>
+                            <div className="space-y-8">
+                                <div className="bg-white p-6 rounded-2xl shadow-xl">
+                                    <h2 className="text-2xl font-semibold text-gray-800 mb-6">Model Accuracies</h2>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-left border-separate border-spacing-0">
+                                            <thead>
+                                                <tr className="bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+                                                    <th className="p-4 rounded-tl-lg">Model</th>
+                                                    <th className="p-4 rounded-tr-lg">Accuracy</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {Object.entries(accuracies).filter(([key]) => key !== 'best_f1').map(([model, accuracy], index) => (
+                                                    <tr key={model} className="hover:bg-gray-50 transition-colors">
+                                                        <td className={`p-4 border-b ${index === Object.keys(accuracies).length - 1 ? 'rounded-bl-lg' : ''}`}>
+                                                            {model}
+                                                        </td>
+                                                        <td className={`p-4 border-b ${index === Object.keys(accuracies).length - 1 ? 'rounded-br-lg' : ''}`}>
+                                                            {(accuracy * 100).toFixed(2)}%
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div className="bg-white p-6 rounded-2xl shadow-xl">
+                                    <h2 className="text-2xl font-semibold text-gray-800 mb-6">Your Predictions</h2>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-left border-separate border-spacing-0">
+                                            <thead>
+                                                <tr className="bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+                                                    <th className="p-4 rounded-tl-lg">Course</th>
+                                                    <th className="p-4">Topic</th>
+                                                    <th className="p-4 rounded-tr-lg">Learning Style</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {predictions.map((p, index) => (
+                                                    <tr key={p.id} className="hover:bg-gray-50 transition-colors">
+                                                        <td className={`p-4 border-b ${index === predictions.length - 1 ? 'rounded-bl-lg' : ''}`}>
+                                                            {p.course}
+                                                        </td>
+                                                        <td className="p-4 border-b">{p.topic}</td>
+                                                        <td className={`p-4 border-b ${index === predictions.length - 1 ? 'rounded-br-lg' : ''}`}>
+                                                            {p.learning_style}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Admin Dashboard Component
+        const AdminDashboard = ({ setPage }) => {
+            const [accuracies, setAccuracies] = useState({});
+            const [predictions, setPredictions] = useState([]);
+            const [message, setMessage] = useState('');
+            const [showDropdown, setShowDropdown] = useState(false);
+            const [selectedGraph, setSelectedGraph] = useState(null);
+            const canvasRef = useRef(null);
+            const chartInstanceRef = useRef(null);
+            const dropdownRef = useRef(null);
+
+            useEffect(() => {
+                axios.get('http://127.0.0.1:5000/accuracies')
+                    .then(res => setAccuracies(res.data))
+                    .catch(err => setMessage('Error fetching accuracies: ' + (err.response?.data?.message || err.message)));
+                axios.get('http://127.0.0.1:5000/predictions?role=admin')
+                    .then(res => setPredictions(res.data))
+                    .catch(err => setMessage('Error fetching predictions: ' + (err.response?.data?.message || err.message)));
+            }, []);
+
+            useEffect(() => {
+                const handleClickOutside = (event) => {
+                    if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                        setShowDropdown(false);
+                    }
+                };
+                document.addEventListener('mousedown', handleClickOutside);
+                return () => document.removeEventListener('mousedown', handleClickOutside);
+            }, []);
+
+            useEffect(() => {
+                if (selectedGraph && canvasRef.current && accuracies) {
+                    if (chartInstanceRef.current) {
+                        chartInstanceRef.current.destroy();
+                    }
+
+                    const ctx = canvasRef.current.getContext('2d');
+                    const labels = Object.keys(accuracies).filter(key => key !== 'best_f1');
+                    const data = labels.map(key => (accuracies[key] * 100).toFixed(2));
+                    const colors = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B'];
+
+                    let chartConfig = {};
+                    if (selectedGraph === 'Bar Graph') {
+                        chartConfig = {
+                            type: 'bar',
+                            data: {
+                                labels,
+                                datasets: [{
+                                    label: 'Model Accuracy (%)',
+                                    data,
+                                    backgroundColor: colors,
+                                    borderColor: colors,
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        max: 100,
+                                        title: { display: true, text: 'Accuracy (%)' }
+                                    },
+                                    x: { title: { display: true, text: 'Model' } }
+                                },
+                                plugins: { legend: { display: false } }
+                            }
+                        };
+                    } else if (selectedGraph === 'Pie Chart') {
+                        chartConfig = {
+                            type: 'pie',
+                            data: {
+                                labels,
+                                datasets: [{
+                                    data,
+                                    backgroundColor: colors,
+                                    borderColor: '#fff',
+                                    borderWidth: 2
+                                }]
+                            },
+                            options: {
+                                plugins: {
+                                    legend: { position: 'right' },
+                                    tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw}%` } }
+                                }
+                            }
+                        };
+                    } else if (selectedGraph === 'Line Graph') {
+                        chartConfig = {
+                            type: 'line',
+                            data: {
+                                labels,
+                                datasets: [{
+                                    label: 'Model Accuracy (%)',
+                                    data,
+                                    borderColor: '#3B82F6',
+                                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                                    fill: true,
+                                    tension: 0.4
+                                }]
+                            },
+                            options: {
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        max: 100,
+                                        title: { display: true, text: 'Accuracy (%)' }
+                                    },
+                                    x: { title: { display: true, text: 'Model' } }
+                                }
+                            }
+                        };
+                    } else if (selectedGraph === 'Scatter Plot') {
+                        chartConfig = {
+                            type: 'scatter',
+                            data: {
+                                datasets: [{
+                                    label: 'Model Accuracy',
+                                    data: labels.map((label, index) => ({ x: index + 1, y: parseFloat(data[index]) })),
+                                    backgroundColor: colors,
+                                    pointRadius: 8
+                                }]
+                            },
+                            options: {
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        max: 100,
+                                        title: { display: true, text: 'Accuracy (%)' }
+                                    },
+                                    x: {
+                                        title: { display: true, text: 'Model Index' },
+                                        ticks: {
+                                            callback: (value, index) => labels[index] || value
+                                        }
+                                    }
+                                }
+                            }
+                        };
+                    }
+
+                    chartInstanceRef.current = new Chart(ctx, chartConfig);
+                }
+
+                return () => {
+                    if (chartInstanceRef.current) {
+                        chartInstanceRef.current.destroy();
+                        chartInstanceRef.current = null;
+                    }
+                };
+            }, [selectedGraph, accuracies]);
+
+            const handleGraphSelect = (graph) => {
+                setSelectedGraph(graph);
+                setShowDropdown(false);
+            };
+
+            return (
+                <div className="min-h-screen p-8">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="flex justify-between items-center mb-8">
+                            <h1 className="text-4xl font-bold text-gray-800">Service Provider Dashboard</h1>
+                            <button 
+                                onClick={() => setPage('home')} 
+                                className="bg-red-600 text-white px-6 py-2 rounded-lg shadow hover:bg-red-700 transition-all duration-300"
+                            >
+                                Logout
+                            </button>
+                        </div>
+                        <div className="space-y-8">
+                            <div className="bg-white p-6 rounded-2xl shadow-xl">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h2 className="text-2xl font-semibold text-gray-800">Model Accuracies</h2>
+                                    <div className="relative" ref={dropdownRef}>
+                                        <button
+                                            onClick={() => setShowDropdown(!showDropdown)}
+                                            className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all duration-300"
+                                        >
+                                            Visualize Accuracies
+                                        </button>
+                                        {showDropdown && (
+                                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-10">
+                                                <button
+                                                    onClick={() => handleGraphSelect('Bar Graph')}
+                                                    className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100"
+                                                >
+                                                    Bar Graph
+                                                </button>
+                                                <button
+                                                    onClick={() => handleGraphSelect('Pie Chart')}
+                                                    className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100"
+                                                >
+                                                    Pie Chart
+                                                </button>
+                                                <button
+                                                    onClick={() => handleGraphSelect('Line Graph')}
+                                                    className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100"
+                                                >
+                                                    Line Graph
+                                                </button>
+                                                <button
+                                                    onClick={() => handleGraphSelect('Scatter Plot')}
+                                                    className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100"
+                                                >
+                                                    Scatter Plot
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                {selectedGraph && (
+                                    <div className="mb-6">
+                                        <canvas ref={canvasRef} className="max-w-full h-96"></canvas>
+                                    </div>
+                                )}
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left border-separate border-spacing-0">
+                                        <thead>
+                                            <tr className="bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+                                                <th className="p-4 rounded-tl-lg">Model</th>
+                                                <th className="p-4 rounded-tr-lg">Accuracy</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {Object.entries(accuracies).filter(([key]) => key !== 'best_f1').map(([model, accuracy], index) => (
+                                                <tr key={model} className="hover:bg-gray-50 transition-colors">
+                                                    <td className={`p-4 border-b ${index === Object.keys(accuracies).length - 1 ? 'rounded-bl-lg' : ''}`}>
+                                                        {model}
+                                                    </td>
+                                                    <td className={`p-4 border-b ${index === Object.keys(accuracies).length - 1 ? 'rounded-br-lg' : ''}`}>
+                                                        {(accuracy * 100).toFixed(2)}%
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div className="bg-white p-6 rounded-2xl shadow-xl">
+                                <h2 className="text-2xl font-semibold text-gray-800 mb-6">All User Predictions</h2>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left border-separate border-spacing-0">
+                                        <thead>
+                                            <tr className="bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+                                                <th className="p-4 rounded-tl-lg">User ID</th>
+                                                <th className="p-4">Course</th>
+                                                <th className="p-4">Topic</th>
+                                                <th className="p-4 rounded-tr-lg">Learning Style</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {predictions.map((p, index) => (
+                                                <tr key={p.id} className="hover:bg-gray-50 transition-colors">
+                                                    <td className={`p-4 border-b ${index === predictions.length - 1 ? 'rounded-bl-lg' : ''}`}>
+                                                        {p.user_id}
+                                                    </td>
+                                                    <td className="p-4 border-b">{p.course}</td>
+                                                    <td className="p-4 border-b">{p.topic}</td>
+                                                    <td className={`p-4 border-b ${index === predictions.length - 1 ? 'rounded-br-lg' : ''}`}>
+                                                        {p.learning_style}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        {message && (
+                            <p className={`mt-4 text-center ${message.includes('successful') ? 'text-green-600' : 'text-red-600'} font-medium animate-fade-in`}>
+                                {message}
+                            </p>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        // Main App Component
+        const App = () => {
+            const [page, setPage] = useState('home');
+            const [userId, setUserId] = useState(null);
+
+            return (
+                <div>
+                    {page === 'home' && <Home setPage={setPage} />}
+                    {page === 'userLogin' && <Login setPage={setPage} role="user" setUserId={setUserId} />}
+                    {page === 'adminLogin' && <Login setPage={setPage} role="admin" setUserId={setUserId} />}
+                    {page === 'userDashboard' && <UserDashboard userId={userId} setPage={setPage} />}
+                    {page === 'adminDashboard' && <AdminDashboard setPage={setPage} />}
+                </div>
+            );
+        };
+
+        // Render the Appx
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
